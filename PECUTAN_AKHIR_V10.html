@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="ms">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#050914">
+<title>PECUTAN AKHIR — Sains Tahun 4</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#02051a;color:#fff;font-family:Arial,sans-serif}
+#camera{position:fixed;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);background:#050914;z-index:0}
+#shade{position:fixed;inset:0;background:radial-gradient(circle at 20% 20%,#253b8a33 0 2px,transparent 3px),radial-gradient(circle at 75% 30%,#ffffff22 0 1px,transparent 2px),radial-gradient(circle at 45% 75%,#6b5cff22 0 2px,transparent 3px),linear-gradient(180deg,#02051a88,#06104a22 45%,#01030eaa);background-size:180px 180px,130px 130px,220px 220px,100% 100%;z-index:1;pointer-events:none}
+#fx{position:fixed;inset:0;width:100%;height:100%;z-index:4;pointer-events:none}
+#ui{position:fixed;inset:0;z-index:5;pointer-events:none}
+.top{position:absolute;top:8px;left:8px;right:8px;display:flex;justify-content:space-between;gap:6px}
+.brand,.stat,.question,.answer,.hint{background:#030817c9;border:1px solid #ffffff35;backdrop-filter:blur(7px)}
+.brand{border-radius:13px;padding:6px 10px}.brand b{font-size:clamp(15px,3vw,25px)}.brand small{display:block;font-size:8px;opacity:.7}
+.stats{display:flex;gap:5px}.stat{min-width:55px;text-align:center;border-radius:11px;padding:4px 7px}.stat small{display:block;font-size:7px;opacity:.7}.stat b{font-size:15px}
+#qbox{position:absolute;top:14%;left:50%;transform:translateX(-50%);width:min(94vw,760px);text-align:center}
+#qno{display:inline-block;font-weight:900;background:#030817c9;border-radius:20px;padding:3px 9px;font-size:9px}
+#question{white-space:pre-line;margin-top:5px;border-radius:14px;padding:9px 12px;font-size:clamp(17px,4vw,32px);font-weight:900;line-height:1.15;text-shadow:0 3px 10px #000}
+#answers{position:absolute;bottom:8%;z-index:6;left:50%;transform:translateX(-50%);width:min(94vw,700px);display:grid;grid-template-columns:repeat(2,1fr);gap:12px;z-index:6}
+.answer{min-height:72px;border-radius:16px;padding:10px;display:flex;align-items:center;justify-content:center;text-align:center;font-weight:900;font-size:clamp(17px,4vw,28px);color:#fff;background:rgba(3,10,35,.9);border:2px solid rgba(150,220,255,.45);box-shadow:0 6px 20px #0008}
+.answer.lock{border:2px solid #fff;box-shadow:0 0 22px #fff8}.answer.correct{background:#008a58e8}.answer.wrong{background:#b02038e8}
+#bar{position:absolute;top:calc(14% - 4px);left:50%;transform:translateX(-50%);width:min(94vw,760px);height:4px;background:#fff2;border-radius:9px;overflow:hidden}
+#bar i{display:block;height:100%;width:0;background:#fff}
+.hint{position:absolute;bottom:1%;left:50%;transform:translateX(-50%);font-size:9px;padding:3px 7px;border-radius:8px;opacity:.8}
+.overlay{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;padding:18px;background:#020612eF;backdrop-filter:blur(10px)}
+.card{width:min(94vw,560px);max-height:92vh;overflow:auto;background:#0a1226f5;border:1px solid #fff3;border-radius:20px;padding:23px;text-align:center;box-shadow:0 20px 60px #0009}
+.card h1{margin:0;font-size:clamp(31px,8vw,55px);letter-spacing:2px}.card h2{margin:5px 0}.card p{font-size:13px;line-height:1.5;opacity:.82}
+button{width:100%;padding:14px;border:0;border-radius:13px;background:#fff;color:#061020;font-weight:900;font-size:17px}
+#error{display:none}.err{white-space:pre-line;text-align:left;background:#0005;padding:11px;border-radius:10px;font-size:12px}
+.col{display:flex;flex-direction:column;gap:8px}#finish{display:none}.final{font-size:50px;font-weight:900}
+@media(max-width:600px){.top{top:5px;left:5px;right:5px}.brand{padding:5px 8px}.brand b{font-size:14px}.stat{min-width:50px;padding:3px 5px}.stat b{font-size:13px}#qbox{top:13%}.answer{min-height:62px;font-size:18px}}
+@media(orientation:landscape) and (max-height:500px){#qbox{top:19%}#answers{bottom:5%;grid-template-columns:repeat(4,1fr)}.answer{min-height:40px}}
+</style>
+</head>
+<body>
+<video id="camera" autoplay playsinline muted></video>
+<div id="shade"></div><canvas id="fx"></canvas>
+
+<div id="ui">
+  <div class="top">
+    <div class="brand"><b>⚡ PECUTAN AKHIR</b><small>Created by CIkgu Fatimah</small></div>
+    <div class="stats">
+      <div class="stat"><small>SKOR</small><b id="score">0</b></div>
+      <div class="stat"><small>COMBO</small><b id="combo">0</b></div>
+      <div class="stat"><small>SOALAN</small><b id="count">0/10</b></div>
+    </div>
+  </div>
+  <div id="bar"><i id="barin"></i></div>
+  <div id="qbox"><div id="qno">SAINS TAHUN 4</div><div class="question" id="question">Sila aktifkan kamera.</div></div>
+  <div id="answers"></div>
+  <div class="hint">Jari telunjuk = cursor • Tahan 0.6 saat</div>
+</div>
+
+<div class="overlay" id="start">
+  <div class="card">
+    <h1>⚡ PECUTAN AKHIR</h1><h2>SAINS TAHUN 4</h2>
+    <p>Gunakan <b>hujung jari telunjuk sahaja</b>. Halakan pada jawapan dan tahan 0.6 saat.</p>
+    <button id="activate">ACTIVATE CAMERA</button>
+    <p id="status">Kamera belum diaktifkan.</p>
+  </div>
+</div>
+
+<div class="overlay" id="error">
+  <div class="card"><h2>⚠️ RALAT</h2><div class="err" id="errmsg"></div><br><button onclick="location.reload()">CUBA SEMULA</button></div>
+</div>
+
+<div class="overlay" id="finish">
+  <div class="card"><h1>🏆 TAMAT!</h1><p>PECUTAN AKHIR</p><div class="final" id="finalscore">0</div><p id="finalmsg"></p><button onclick="location.reload()">MAIN SEMULA</button></div>
+</div>
+
+<script>
+"use strict";
+
+/* =========================================================
+   KAMERA DIASINGKAN DARIPADA MEDIAPIPE
+   Ini penting: jika CDN MediaPipe bermasalah, butang kamera
+   masih boleh berfungsi dan ralat boleh dipaparkan.
+   ========================================================= */
+
+const $=id=>document.getElementById(id);
+const video=$("camera"), canvas=$("fx"), ctx=canvas.getContext("2d");
+const start=$("start"), error=$("error"), match=$("match"), finish=$("finish");
+const activate=$("activate"), statusEl=$("status"), errmsg=$("errmsg");
+let stream=null, handLandmarker=null, lastTime=-1, ready=false;
+let pointer={x:0,y:0,visible:false}, target=null, targetAt=0;
+const HOLD=600;
+let score=0,combo=0,qi=0,particles=[];
+
+const questions=[
+  {type:"BETUL ATAU SALAH",q:"🐯 HARIMAU ialah haiwan karnivor.",a:["BETUL","SALAH"],c:0},
+  {type:"BETUL ATAU SALAH",q:"🌱 Tumbuhan memerlukan cahaya matahari untuk membuat makanan.",a:["BETUL","SALAH"],c:0},
+  {type:"BETUL ATAU SALAH",q:"🧑 Manusia bernafas menggunakan paru-paru.",a:["BETUL","SALAH"],c:0},
+  {type:"BETUL ATAU SALAH",q:"🐟 Ikan bernafas menggunakan paru-paru seperti manusia.",a:["BETUL","SALAH"],c:1},
+  {type:"BETUL ATAU SALAH",q:"🌿 Akar membantu menyerap air dan garam mineral daripada tanah.",a:["BETUL","SALAH"],c:0},
+  {type:"BETUL ATAU SALAH",q:"🦴 Manusia mempunyai rangka yang membantu menyokong dan melindungi badan.",a:["BETUL","SALAH"],c:0},
+  {type:"BETUL ATAU SALAH",q:"🐐 Kambing ialah haiwan omnivor.",a:["BETUL","SALAH"],c:1},
+  {type:"BETUL ATAU SALAH",q:"🌻 Tumbuhan tidak memerlukan air untuk hidup.",a:["BETUL","SALAH"],c:1},
+  {type:"BETUL ATAU SALAH",q:"🫁 Manusia menggunakan hidung dan mulut untuk mengambil udara masuk ke dalam badan.",a:["BETUL","SALAH"],c:0},
+  {type:"BETUL ATAU SALAH",q:"🐸 Katak ialah haiwan yang boleh hidup di darat dan di air.",a:["BETUL","SALAH"],c:0}
+];
+const matchingData=[
+  {
+    words:["🐟 Ikan","🦋 Rama-rama","🐱 Kucing"],
+    cats:["VERTEBRATA","INVERTEBRATA"],
+    ok:{
+      "🐟 Ikan":"VERTEBRATA",
+      "🦋 Rama-rama":"INVERTEBRATA",
+      "🐱 Kucing":"VERTEBRATA"
+    }
+  }
+];
+
+
+
+[
+ {words:["Kucing","Helang","Kambing"],cats:["Herbivor","Karnivor","Omnivor"],ok:{Kucing:"Karnivor",Helang:"Karnivor",Kambing:"Herbivor"}},
+ {words:["Manusia","Ikan","Ayam"],cats:["Mamalia","Ikan","Burung"],ok:{Manusia:"Mamalia",Ikan:"Ikan",Ayam:"Burung"}}
+];
+
+function resize(){
+  const d=Math.min(devicePixelRatio||1,2);
+  canvas.width=Math.floor(innerWidth*d); canvas.height=Math.floor(innerHeight*d);
+  canvas.style.width=innerWidth+"px";canvas.style.height=innerHeight+"px";
+  ctx.setTransform(d,0,0,d,0,0);
+}
+addEventListener("resize",resize); resize();
+
+function fail(msg){
+  console.error(msg);
+  start.style.display="none";match.style.display="none";error.style.display="flex";
+  errmsg.textContent=msg;
+}
+
+async function startCamera(){
+  if(!window.isSecureContext) throw new Error("HTTPS diperlukan. Buka melalui GitHub Pages atau Netlify, bukan file://.");
+  if(!navigator.mediaDevices?.getUserMedia) throw new Error("Browser ini tidak menyokong getUserMedia(). Cuba Google Chrome Android.");
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({
+      audio:false,
+      video:{facingMode:{ideal:"user"},width:{ideal:1280},height:{ideal:720},frameRate:{ideal:30,max:30}}
+    });
+  }catch(e){
+    const n=e?.name||"UnknownError";
+    if(n==="NotAllowedError") throw new Error("Akses kamera ditolak. Tekan ikon kunci kamera pada Chrome dan benarkan Camera.");
+    if(n==="NotFoundError") throw new Error("Kamera tidak ditemui pada peranti.");
+    if(n==="NotReadableError") throw new Error("Kamera sedang digunakan oleh aplikasi lain. Tutup aplikasi kamera/Meet/Zoom dan cuba lagi.");
+    throw new Error("getUserMedia gagal: "+n+" — "+(e?.message||"ralat tidak diketahui"));
+  }
+  video.srcObject=stream;
+  await video.play();
+  await new Promise((resolve,reject)=>{
+    const t=setTimeout(()=>reject(new Error("Kamera tidak memberi video dalam masa 8 saat.")),8000);
+    if(video.readyState>=2){clearTimeout(t);resolve();return}
+    video.addEventListener("loadeddata",()=>{clearTimeout(t);resolve()},{once:true});
+  });
+}
+
+async function loadMediaPipe(){
+  statusEl.textContent="Kamera hidup ✓ Memuatkan Hand Tracking...";
+  let mod = null;
+  let cdnErrors = [];
+
+  /* Google kini mendokumentasikan vision_bundle.mjs sebagai cara
+     pemuatan MediaPipe Tasks Vision untuk Web. Kita elakkan
+     endpoint +esm yang menyebabkan ralat dalam sesetengah Chrome. */
+  const cdnUrls = [
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/vision_bundle.mjs",
+    "https://unpkg.com/@mediapipe/tasks-vision@0.10.35/vision_bundle.mjs"
+  ];
+
+  for (const url of cdnUrls) {
+    try {
+      mod = await import(url);
+      if (mod && mod.HandLandmarker && mod.FilesetResolver) break;
+    } catch (e) {
+      cdnErrors.push(url + " -> " + (e?.message || e));
+    }
+  }
+
+  if (!mod || !mod.HandLandmarker || !mod.FilesetResolver) {
+    throw new Error(
+      "MediaPipe tidak dapat dimuatkan.\n\n" +
+      "Cuba pastikan Internet aktif dan refresh halaman.\n\n" +
+      "Sumber yang dicuba:\n" + cdnErrors.join("\n")
+    );
+  }
+
+  const {HandLandmarker,FilesetResolver}=mod;
+  let vision;
+  const wasmUrls = [
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.35/wasm",
+    "https://unpkg.com/@mediapipe/tasks-vision@0.10.35/wasm"
+  ];
+
+  let wasmError = null;
+  for (const wasmUrl of wasmUrls) {
+    try {
+      vision = await FilesetResolver.forVisionTasks(wasmUrl);
+      if (vision) break;
+    } catch (e) {
+      wasmError = e;
+    }
+  }
+
+  if (!vision) {
+    throw new Error(
+      "MediaPipe berjaya dimuatkan tetapi fail WASM gagal dimuatkan.\n" +
+      (wasmError?.message || wasmError || "")
+    );
+  }
+  const model="https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task";
+  try{
+    handLandmarker=await HandLandmarker.createFromOptions(vision,{
+      baseOptions:{modelAssetPath:model,delegate:"GPU"},
+      runningMode:"VIDEO",numHands:1,
+      minHandDetectionConfidence:.5,minHandPresenceConfidence:.5,minTrackingConfidence:.5
+    });
+  }catch(gpuErr){
+    console.warn("GPU gagal, cuba CPU",gpuErr);
+    handLandmarker=await HandLandmarker.createFromOptions(vision,{
+      baseOptions:{modelAssetPath:model,delegate:"CPU"},
+      runningMode:"VIDEO",numHands:1,
+      minHandDetectionConfidence:.5,minHandPresenceConfidence:.5,minTrackingConfidence:.5
+    });
+  }
+}
+
+activate.addEventListener("click",async()=>{
+  activate.disabled=true;
+  statusEl.textContent="Membuka kamera...";
+  try{
+    await startCamera();
+    statusEl.textContent="Kamera hidup ✓";
+    await loadMediaPipe();
+    ready=true;
+    start.style.display="none";
+    startGame();
+    requestAnimationFrame(loop);
+  }catch(e){
+    fail("Permainan tidak dapat dimulakan.\n\n"+(e?.message||e)+"\n\nPastikan:\n• GitHub Pages menggunakan HTTPS\n• Kamera Chrome dibenarkan\n• Internet tersedia untuk MediaPipe");
+  }
+});
+
+function startGame(){score=0;combo=0;qi=0;updateStats();showQuestion()}
+
+function showQuestion(){
+  if(qi>=questions.length){finishGame();return}
+  const q=questions[qi];
+  $("qno").textContent=`${q.type} • SOALAN ${qi+1}/10`;
+  $("question").textContent=q.q;
+  $("answers").innerHTML="";
+  q.a.forEach((a,i)=>{
+    const d=document.createElement("div");
+    d.className="answer";
+    d.textContent=a;
+    d.dataset.i=i;
+    $("answers").appendChild(d);
+  });
+  $("barin").style.width="0%";
+  resetTarget();
+}
+
+function next(){
+  qi++;
+  showQuestion();
+}
+
+function answer(el){
+  if(el.dataset.used)return;
+  el.dataset.used="1";
+  const ok=+el.dataset.i===questions[qi].c;
+  if(ok){
+    el.classList.add("correct");
+    combo++;
+    score+=100+combo*20;
+    burst(el,true); applause();
+  }else{
+    el.classList.add("wrong");
+    combo=0;
+    score=Math.max(0,score-20);
+    burst(el,false);
+  }
+  updateStats();
+  resetTarget();
+  setTimeout(next,650);
+}
+
+
+function process(result){
+  pointer.visible=false;
+  if(!result || !result.landmarks || !result.landmarks.length){
+    resetTarget();
+    return;
+  }
+  const tip=result.landmarks[0][8];
+  if(!tip)return;
+  pointer.x=(1-tip.x)*innerWidth;
+  pointer.y=tip.y*innerHeight;
+  pointer.visible=true;
+  handleAnswerPointer();
+}
+
+function handleAnswerPointer(){
+  const els=[...document.querySelectorAll(".answer:not([data-used='1'])")];
+  const hit=els.find(el=>{const r=el.getBoundingClientRect();return pointer.x>=r.left&&pointer.x<=r.right&&pointer.y>=r.top&&pointer.y<=r.bottom});
+  if(!hit){resetTarget();return}
+  if(target!==hit){resetTarget();target=hit;targetAt=performance.now();hit.classList.add("lock")}
+  const p=Math.min((performance.now()-targetAt)/HOLD,1);
+  $("barin").style.width=(p*100)+"%";
+  if(p>=1)answer(hit);
+}
+
+
+function resetTarget(){
+  if(target)target.classList.remove("lock");
+  target=null;targetAt=0;$("barin").style.width="0%";
+}
+
+function draw(){
+  ctx.clearRect(0,0,innerWidth,innerHeight);
+  if(pointer.visible){
+    const x=pointer.x,y=pointer.y;
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y+70);ctx.strokeStyle="#fff6";ctx.lineWidth=2;ctx.stroke();
+    ctx.beginPath();ctx.arc(x,y,7,0,Math.PI*2);ctx.fillStyle="#fff";ctx.shadowBlur=15;ctx.shadowColor="#fff";ctx.fill();ctx.shadowBlur=0;
+    if(target){const p=Math.min((performance.now()-targetAt)/HOLD,1);ctx.beginPath();ctx.arc(x,y,18,-Math.PI/2,-Math.PI/2+p*Math.PI*2);ctx.strokeStyle="#fff";ctx.lineWidth=4;ctx.stroke()}
+  }
+  for(let i=particles.length-1;i>=0;i--){const p=particles[i];p.x+=p.vx;p.y+=p.vy;p.life-=.04;if(p.life<=0){particles.splice(i,1);continue}ctx.globalAlpha=p.life;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fillStyle="#fff";ctx.fill();ctx.globalAlpha=1}
+}
+
+function burst(el){
+  const r=el.getBoundingClientRect(),x=r.left+r.width/2,y=r.top+r.height/2;
+  for(let i=0;i<18;i++)particles.push({x,y,vx:(Math.random()-.5)*6,vy:(Math.random()-.5)*6,life:1});
+}
+
+function loop(){
+  if(ready&&handLandmarker&&video.readyState>=2&&video.currentTime!==lastTime){
+    try{const res=handLandmarker.detectForVideo(video,performance.now());lastTime=video.currentTime;process(res)}
+    catch(e){console.warn("Hand tracking:",e)}
+  }
+  draw();requestAnimationFrame(loop);
+}
+
+
+function applause(){
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC)return;
+    const ac=new AC();
+    const now=ac.currentTime;
+    [660,880,1046,1320].forEach((f,i)=>{
+      const o=ac.createOscillator(),g=ac.createGain();
+      o.type="triangle";o.frequency.value=f;
+      g.gain.setValueAtTime(0.0001,now+i*.08);
+      g.gain.exponentialRampToValueAtTime(.06,now+i*.08+.02);
+      g.gain.exponentialRampToValueAtTime(.0001,now+i*.08+.18);
+      o.connect(g);g.connect(ac.destination);
+      o.start(now+i*.08);o.stop(now+i*.08+.2);
+    });
+    setTimeout(()=>ac.close().catch(()=>{}),700);
+  }catch(e){console.warn("Audio:",e)}
+}
+
+function updateStats(){$("score").textContent=score;$("combo").textContent=combo;$("count").textContent=`${Math.min(qi+1,10)}/10`}
+
+function finishGame(){
+  finish.style.display="flex";$("finalscore").textContent=score;
+  $("finalmsg").textContent=score>=1300?"Hebat! Penguasaan Sains Tahun 4 sangat baik!":score>=800?"Syabas! Prestasi sangat baik!":"Bagus! Teruskan berlatih untuk meningkatkan skor.";
+}
+
+window.addEventListener("pagehide",()=>stream?.getTracks().forEach(t=>t.stop()));
+</script>
+</body>
+</html>
